@@ -3,6 +3,9 @@
 
 int main() {
 
+	std::cout << "Using it to attach a debugger" << std::endl;
+	std::cin.get();
+
 	try
 	{
 		Image("../Mocks/Test1.jpg");
