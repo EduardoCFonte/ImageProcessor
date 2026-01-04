@@ -29,6 +29,8 @@ public:
 
 	void save(const std::string& outputFilePath);
 
+	void allocateGPU();
+
 private:
 
 	// Width in pixels
@@ -45,4 +47,6 @@ private:
 
 	//A lot of consecutive bytes that actually represents the image for the VRAM and GPU
 	unsigned char* m_GpuData = nullptr;
+
+	std::string setOutputPath(const std::string& filepath);
 };

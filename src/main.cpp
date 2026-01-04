@@ -1,5 +1,6 @@
 #include <iostream>
 #include "Image.h"
+#include "cudaProcessor.cuh"
 
 int main() {
 
@@ -8,7 +9,23 @@ int main() {
 
 	try
 	{
-		Image("../Mocks/Test1.jpg");
+		Image imageToGrey("../Mocks/Test1.jpg");
+		int w = imageToGrey.GetWidth();
+		int h = imageToGrey.GetHeight();
+		int c = imageToGrey.GetChannels();
+
+		Image greyImage(w, h, 1);
+
+		imageToGrey.uploadToGPU();
+
+		greyImage.allocateGPU();
+
+		launchGrayscaleKernel(imageToGrey.getGPUData(), greyImage.getGPUData(), w, h, c);
+
+		greyImage.downloadFromGPU();
+
+		greyImage.save("GreyResult.png");
+
 	}
 	catch (const std::exception& e)
 	{
