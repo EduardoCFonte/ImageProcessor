@@ -32,6 +32,9 @@ Image::~Image() {
 	if (m_GpuData) {
 		cudaFree(m_GpuData); 
 	}
+
+	if (m_CpuOutputData)
+		free(m_CpuOutputData);
 }
 
 void Image::save(const std::string& outputPath) {
@@ -48,6 +51,22 @@ void Image::save(const std::string& outputPath) {
 		std::cerr << "[ERROR] Failed to save the image." << std::endl;
 	}
 }
+
+void Image::save_with_cpu(const std::string& outputPath) {
+	if (!m_CpuOutputData)
+		return;
+	std::string finalPath = setOutputPath(outputPath);
+
+	int success = stbi_write_png(finalPath.c_str(), m_width, m_height, 1, m_CpuOutputData, m_width * 1);
+
+	if (success) {
+		std::cout << "[LOG] Image saved on " << outputPath << std::endl;
+	}
+	else {
+		std::cerr << "[ERROR] Failed to save the image." << std::endl;
+	}
+}
+
 
 int Image::GetWidth() {
 	return m_width;
@@ -127,9 +146,23 @@ std::string Image::setOutputPath(const std::string& filepath) {
 	std::string extension = fullPath.extension().string();
 
 	for (int i = 0; i != -1; i++) {
-		std::string newFileName = filename + "_" + std::to_string(i) + extension;
+		std::string newFileName = filename + "_CPU" + std::to_string(i) + extension;
 		std::filesystem::path tryPath = folderPath / newFileName;
 		if (!std::filesystem::exists(tryPath))
 			return tryPath.string();
+	}
+}
+
+void Image::processWithCPU() {
+
+	size_t size = static_cast<size_t>(m_width) * m_height;
+	if (m_CpuOutputData)
+		free(m_CpuOutputData);
+	m_CpuOutputData = (unsigned char*)malloc(size);
+
+	for (size_t i = 0; i < size; i++) {
+		size_t rgbIndex = i * m_channels;
+		float gray = m_HostData[rgbIndex] * 0.299f + m_HostData[rgbIndex + 1] * 0.589f + m_HostData[rgbIndex + 2] * 0.114f;
+		m_CpuOutputData[i] = static_cast<unsigned char>(gray);
 	}
 }
